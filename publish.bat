@@ -14,7 +14,8 @@ rem ============================================================
 
 set "PY=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
 if not exist "%PY%" set "PY=python"
-set "TOOL_DIR=%~dp0.."
+set "TOOL_DIR=%~dp0.."
+set "REPO_DIR=%~dp0"
 
 rem ---- 可选：先吊销 ----
 if "%~1"=="" goto :export
@@ -30,10 +31,11 @@ goto :revoke_loop
 :export
 echo [publish] 导出吊销名单
 pushd "%TOOL_DIR%"
-"%PY%" sign_license.py --export-revocations "%~dp0revocations.json"
+"%PY%" sign_license.py --export-revocations "%REPO_DIR%revocations.json"
 popd
 
 rem ---- git 走加速器（本仓库级配置已固化；脚本再兜底一次） ----
+pushd "%REPO_DIR%"
 git config http.proxy http://127.0.0.1:10090
 git config http.sslBackend openssl
 
@@ -54,5 +56,6 @@ if errorlevel 1 (
 echo [publish] 刷新 jsDelivr CDN 缓存...
 curl -s -m 10 "https://purge.jsdelivr.net/gh/Furkedr/cfh-devkit-revocations@main/revocations.json" >nul 2>&1
 
+popd
 echo [publish] 完成。客户下次启动程序即生效。
 endlocal
